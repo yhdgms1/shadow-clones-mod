@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "shadow-clones",
+	"version": "${version}",
+	"name": "Shadow Clones",
+	"description": "Ever wanted a Shadow Clone Technique? There it is.",
+	"authors": [
+		"yhdgms1"
+	],
+	"contact": {
+		"sources": "https://github.com/yhdgms1/shadow-clones-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/shadow-clones/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.yhdgms1.shadow_clones.ShadowClones"
+		],
+		"client": [
+			"dev.yhdgms1.shadow_clones.ShadowClonesClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.16.14",
+		"minecraft": "~1.21.8",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
