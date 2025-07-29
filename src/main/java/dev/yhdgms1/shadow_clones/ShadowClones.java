@@ -54,6 +54,14 @@ public class ShadowClones implements ModInitializer {
 			EntityType.Builder.create(CloneEntity::new, SpawnGroup.MISC).dimensions(0.6f, 1.8f).build(CLONE_KEY)
 	);
 
+	public static final Identifier CLONE_SLIM_ID = Identifier.of(MOD_ID, "clone_slim");
+	public static final RegistryKey<EntityType<?>> CLONE_SLIM_KEY = RegistryKey.of(RegistryKeys.ENTITY_TYPE, CLONE_SLIM_ID);
+	public static final EntityType<CloneEntitySlim> CLONE_SLIM = Registry.register(
+			Registries.ENTITY_TYPE,
+			CLONE_SLIM_ID,
+			EntityType.Builder.create(CloneEntitySlim::new, SpawnGroup.MISC).dimensions(0.6f, 1.8f).build(CLONE_SLIM_KEY)
+	);
+
 	private static final Gson gson = (new GsonBuilder()).registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
 
 	@Override
@@ -61,9 +69,9 @@ public class ShadowClones implements ModInitializer {
 		// todo: place clones nicely
 		// todo: for each clone take 1 hp from player
 
-		// todo fix: armor is an actual armor
 
 		FabricDefaultAttributeRegistry.register(CLONE, CloneEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(CLONE_SLIM, CloneEntitySlim.createAttributes());
 
 		PayloadTypeRegistry.playC2S().register(SummonShadowClonesC2SPayload.ID, SummonShadowClonesC2SPayload.CODEC);
 
@@ -72,6 +80,8 @@ public class ShadowClones implements ModInitializer {
 			ServerWorld world = player.getWorld();
 			MinecraftServer server = player.getServer();
 			BlockPos pos = player.getBlockPos();
+
+			String modelType = payload.modelType();
 
 			float health = player.getHealth();
 
@@ -94,7 +104,7 @@ public class ShadowClones implements ModInitializer {
 				skinURL = Optional.of(texture.getUrl());
 			}
 
-			CloneEntity entity = new CloneEntity(ShadowClones.CLONE, world);
+			CloneEntity entity = modelType.equals("slim") ? new CloneEntitySlim(ShadowClones.CLONE_SLIM, world) : new CloneEntity(ShadowClones.CLONE, world);
 
 			for (EquipmentSlot slot : EquipmentSlot.values()) {
 				EquipmentSlot.Type type = slot.getType();

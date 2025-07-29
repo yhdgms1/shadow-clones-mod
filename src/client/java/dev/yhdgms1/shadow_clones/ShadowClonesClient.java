@@ -9,10 +9,13 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.SkinTextures;
 import org.lwjgl.glfw.GLFW;
 
 public class ShadowClonesClient implements ClientModInitializer {
 	public static final EntityModelLayer MODEL_CLONE_LAYER = new EntityModelLayer(ShadowClones.CLONE_ID, "main");
+	public static final EntityModelLayer MODEL_CLONE_SLIM_LAYER = new EntityModelLayer(ShadowClones.CLONE_SLIM_ID, "main");
+
 	public static final KeyBinding SPAWN_CLONES_KEY_BINDING = KeyBindingHelper.registerKeyBinding(
 			new KeyBinding("key.shadow_clones.spawn", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_N, "category.shadow_clones.main")
 	);
@@ -20,11 +23,16 @@ public class ShadowClonesClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EntityRendererRegistry.register(ShadowClones.CLONE, CloneEntityRenderer::new);
+		EntityRendererRegistry.register(ShadowClones.CLONE_SLIM, CloneEntityRendererSlim::new);
 		EntityModelLayerRegistry.registerModelLayer(MODEL_CLONE_LAYER, CloneEntityModel::getTexturedModelData);
+		EntityModelLayerRegistry.registerModelLayer(MODEL_CLONE_SLIM_LAYER, CloneEntityModelSlim::getTexturedModelData);
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (SPAWN_CLONES_KEY_BINDING.wasPressed()) {
-				ClientPlayNetworking.send(new SummonShadowClonesC2SPayload());
+				SkinTextures.Model model = client.getSkinProvider().getSkinTextures(client.getGameProfile()).model();
+				String modelType = model.getName();
+
+				ClientPlayNetworking.send(new SummonShadowClonesC2SPayload(modelType));
 			}
 		});
 	}

@@ -1,5 +1,6 @@
 {
   "key.shadow_clones.spawn": "Spawn Clones",
   "category.shadow_clones.main": "Shadow Clones",
-  "entity.shadow_clones.clone": "Shadow Clone"
+  "entity.shadow_clones.clone": "Shadow Clone",
+  "entity.shadow_clones.clone_slim": "Shadow Clone"
 }

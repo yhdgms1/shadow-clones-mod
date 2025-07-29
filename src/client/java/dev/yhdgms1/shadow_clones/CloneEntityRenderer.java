@@ -30,9 +30,7 @@ public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRen
     public CloneEntityRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new CloneEntityModel<>(ctx.getPart(ShadowClonesClient.MODEL_CLONE_LAYER)), 0.5f);
 
-        boolean slim = true;
-
-        this.addFeature(new ArmorFeatureRenderer(this, new ArmorEntityModel(ctx.getPart(slim ? EntityModelLayers.PLAYER_SLIM_INNER_ARMOR : EntityModelLayers.PLAYER_INNER_ARMOR)), new ArmorEntityModel(ctx.getPart(slim ? EntityModelLayers.PLAYER_SLIM_OUTER_ARMOR : EntityModelLayers.PLAYER_OUTER_ARMOR)), ctx.getEquipmentRenderer()));
+        this.addFeature(new ArmorFeatureRenderer(this, new ArmorEntityModel(ctx.getPart(EntityModelLayers.PLAYER_INNER_ARMOR)), new ArmorEntityModel(ctx.getPart(EntityModelLayers.PLAYER_OUTER_ARMOR)), ctx.getEquipmentRenderer()));
         this.addFeature(new PlayerHeldItemFeatureRenderer(this));
         this.addFeature(new HeadFeatureRenderer(this, ctx.getEntityModels()));
         this.addFeature(new ElytraFeatureRenderer(this, ctx.getEntityModels(), ctx.getEquipmentRenderer()));
@@ -47,37 +45,7 @@ public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRen
     public void updateRenderState(CloneEntity entity, CloneRenderState state, float f) {
         super.updateRenderState(entity, state, f);
         BipedEntityRenderer.updateBipedRenderState(entity, state, f, this.itemModelResolver);
-
-        String url = entity.getSkinURL();
-
-        if (!url.isEmpty()) {
-            TextureManager.LoadingTexture loadingTexture = TextureManager.loadTexture(url);
-
-            if (loadingTexture.state == TextureManager.State.COMPLETE && !state.skinUpdated) {
-                state.skinUpdated = true;
-                loadingTexture.texture.ifPresent(identifier -> state.skinTexture = identifier);
-            }
-        } else {
-            if (!state.skinUpdated) {
-                state.skinUpdated = true;
-
-                Optional<SkinTextures> skinTextures = TextureManager.getOfflineTextures(entity);
-
-                skinTextures.ifPresent(textures -> {
-                    state.skinTexture = textures.texture();
-                });
-            }
-        }
-
-        state.equippedHeadStack = entity.getEquippedStack(EquipmentSlot.HEAD);
-        state.equippedChestStack = entity.getEquippedStack(EquipmentSlot.CHEST);
-        state.equippedLegsStack = entity.getEquippedStack(EquipmentSlot.LEGS);
-        state.equippedFeetStack = entity.getEquippedStack(EquipmentSlot.FEET);
-
-        state.leftArmPose = getArmPose(entity, Arm.LEFT);
-        state.rightArmPose = getArmPose(entity, Arm.RIGHT);
-
-        state.displayName = Text.of(entity.getProfileName());
+        updateRenderStateShared(entity, state);
     }
 
     @Override
@@ -90,7 +58,7 @@ public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRen
         matrixStack.scale(0.9375F, 0.9375F, 0.9375F);
     }
 
-    private static BipedEntityModel.ArmPose getArmPose(CloneEntity player, Arm arm) {
+    public static BipedEntityModel.ArmPose getArmPose(CloneEntity player, Arm arm) {
         ItemStack itemStack = player.getStackInHand(Hand.MAIN_HAND);
         ItemStack itemStack2 = player.getStackInHand(Hand.OFF_HAND);
         BipedEntityModel.ArmPose armPose = getArmPose(player, itemStack, Hand.MAIN_HAND);
@@ -102,7 +70,7 @@ public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRen
         return player.getMainArm() == arm ? armPose : armPose2;
     }
 
-    private static BipedEntityModel.ArmPose getArmPose(CloneEntity player, ItemStack stack, Hand hand) {
+    public static BipedEntityModel.ArmPose getArmPose(CloneEntity player, ItemStack stack, Hand hand) {
         if (stack.isEmpty()) {
             return BipedEntityModel.ArmPose.EMPTY;
         } else if (!player.handSwinging && stack.isOf(Items.CROSSBOW) && CrossbowItem.isCharged(stack)) {
@@ -143,4 +111,36 @@ public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRen
         }
     }
 
+    public static void updateRenderStateShared(CloneEntity entity, CloneRenderState state) {
+        String url = entity.getSkinURL();
+
+        if (!url.isEmpty()) {
+            TextureManager.LoadingTexture loadingTexture = TextureManager.loadTexture(url);
+
+            if (loadingTexture.state == TextureManager.State.COMPLETE && !state.skinUpdated) {
+                state.skinUpdated = true;
+                loadingTexture.texture.ifPresent(identifier -> state.skinTexture = identifier);
+            }
+        } else {
+            if (!state.skinUpdated) {
+                state.skinUpdated = true;
+
+                Optional<SkinTextures> skinTextures = TextureManager.getOfflineTextures(entity);
+
+                skinTextures.ifPresent(textures -> {
+                    state.skinTexture = textures.texture();
+                });
+            }
+        }
+
+        state.equippedHeadStack = entity.getEquippedStack(EquipmentSlot.HEAD);
+        state.equippedChestStack = entity.getEquippedStack(EquipmentSlot.CHEST);
+        state.equippedLegsStack = entity.getEquippedStack(EquipmentSlot.LEGS);
+        state.equippedFeetStack = entity.getEquippedStack(EquipmentSlot.FEET);
+
+        state.leftArmPose = getArmPose(entity, Arm.LEFT);
+        state.rightArmPose = getArmPose(entity, Arm.RIGHT);
+
+        state.displayName = Text.of(entity.getProfileName());
+    }
 }
