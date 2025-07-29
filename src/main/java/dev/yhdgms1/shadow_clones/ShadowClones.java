@@ -34,13 +34,12 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class ShadowClones implements ModInitializer {
 	public static final String MOD_ID = "shadow_clones";
@@ -66,10 +65,6 @@ public class ShadowClones implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// todo: place clones nicely
-		// todo: for each clone take 1 hp from player
-
-
 		FabricDefaultAttributeRegistry.register(CLONE, CloneEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(CLONE_SLIM, CloneEntitySlim.createAttributes());
 
@@ -78,12 +73,6 @@ public class ShadowClones implements ModInitializer {
 		ServerPlayNetworking.registerGlobalReceiver(SummonShadowClonesC2SPayload.ID, (payload, context) -> {
 			ServerPlayerEntity player = context.player();
 			ServerWorld world = player.getWorld();
-			MinecraftServer server = player.getServer();
-			BlockPos pos = player.getBlockPos();
-
-			String modelType = payload.modelType();
-
-			float health = player.getHealth();
 
 			GameProfile gameProfile = player.getGameProfile();
 			String profileName = gameProfile.getName();
@@ -104,24 +93,45 @@ public class ShadowClones implements ModInitializer {
 				skinURL = Optional.of(texture.getUrl());
 			}
 
-			CloneEntity entity = modelType.equals("slim") ? new CloneEntitySlim(ShadowClones.CLONE_SLIM, world) : new CloneEntity(ShadowClones.CLONE, world);
+			String modelType = payload.modelType();
 
-			for (EquipmentSlot slot : EquipmentSlot.values()) {
-				EquipmentSlot.Type type = slot.getType();
+			float health = player.getHealth();
+			int cloneCount = Helpers.getClonesSpawnCount(health, player.getMaxHealth());
 
-				if (type == EquipmentSlot.Type.HUMANOID_ARMOR || type == EquipmentSlot.Type.HAND) {
-					entity.equipStack(slot, player.getEquippedStack(slot).copy());
-					entity.setEquipmentDropChance(slot, 0);
-				}
+			if (cloneCount == 0) {
+				return;
 			}
 
-			skinURL.ifPresent(entity::setSkinURL);
+			player.setHealth(health - cloneCount * 1.5f);
 
-			entity.setOwnerId(ownerId);
-			entity.setProfileName(profileName);
-			entity.setPos(pos.getX(), pos.getY(), pos.getZ() + 2);
+			List<Vec3d> spawnPositions = Helpers.getSpawnPositions(cloneCount, player);
 
-			world.spawnEntity(entity);
+			float playerYaw = player.getYaw();
+			float playerBodyYaw = player.getBodyYaw();
+
+			for (Vec3d spawnPos : spawnPositions) {
+				CloneEntity entity = modelType.equals("slim") ? new CloneEntitySlim(ShadowClones.CLONE_SLIM, world) : new CloneEntity(ShadowClones.CLONE, world);
+
+				for (EquipmentSlot slot : EquipmentSlot.values()) {
+					EquipmentSlot.Type type = slot.getType();
+
+					if (type == EquipmentSlot.Type.HUMANOID_ARMOR || type == EquipmentSlot.Type.HAND) {
+						entity.equipStack(slot, player.getEquippedStack(slot).copy());
+						entity.setEquipmentDropChance(slot, 0);
+					}
+				}
+
+				skinURL.ifPresent(entity::setSkinURL);
+
+				entity.setOwnerId(ownerId);
+				entity.setProfileName(profileName);
+
+				entity.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
+				entity.setYaw(playerYaw);
+				entity.setBodyYaw(playerBodyYaw);
+
+				world.spawnEntity(entity);
+			}
 		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
