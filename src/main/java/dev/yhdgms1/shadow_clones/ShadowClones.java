@@ -11,6 +11,7 @@ import com.mojang.util.UUIDTypeAdapter;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -28,6 +29,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.BlockPos;
@@ -134,6 +136,14 @@ public class ShadowClones implements ModInitializer {
 				}
 			}
 		});
+
+		AttackEntityCallback.EVENT.register(((playerEntity, world, hand, entity, entityHitResult) -> {
+			if (!world.isClient && entity instanceof CloneEntity) {
+				entity.kill((ServerWorld) world);
+			}
+
+			return ActionResult.PASS;
+		}));
 
 	}
 }
