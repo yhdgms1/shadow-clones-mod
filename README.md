@@ -7,3 +7,7 @@ Clone will have armor and weapon that player has, but nevertheless will die from
 
 When player hits another entity, shadow clones will attack it for 300 ticks.
 When player dies or logs out shadow clones dies.
+
+Only Mojans skins is supported.
+
+[showcase.webm](https://github.com/user-attachments/assets/3bb2bff6-12f8-4a2e-b2d8-332de252aa82)
