@@ -16,12 +16,10 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnGroup;
-import net.minecraft.network.packet.c2s.common.SyncedClientOptions;
-import net.minecraft.predicate.entity.EntityPredicate;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -32,9 +30,8 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,15 +91,18 @@ public class ShadowClones implements ModInitializer {
 			}
 
 			String modelType = payload.modelType();
+			GameMode gameMode = player.getGameMode();
 
 			float health = player.getHealth();
-			int cloneCount = Helpers.getClonesSpawnCount(health, player.getMaxHealth());
+			int cloneCount = gameMode == GameMode.CREATIVE ? Constants.MAX_CLONES : Helpers.getClonesSpawnCount(health, player.getMaxHealth());
 
 			if (cloneCount == 0) {
 				return;
 			}
 
-			player.setHealth(health - cloneCount * 1.5f);
+			if (gameMode == GameMode.SURVIVAL) {
+				player.setHealth(health - cloneCount * 1.5f);
+			}
 
 			List<Vec3d> spawnPositions = Helpers.getSpawnPositions(cloneCount, player);
 
@@ -160,6 +160,18 @@ public class ShadowClones implements ModInitializer {
 		AttackEntityCallback.EVENT.register(((playerEntity, world, hand, entity, entityHitResult) -> {
 			if (!world.isClient && entity instanceof CloneEntity) {
 				entity.kill((ServerWorld) world);
+			}
+
+			// todo: attack when player is under attack
+			if (!world.isClient && entity instanceof LivingEntity) {
+				ServerWorld serverWorld = (ServerWorld)world;
+				String ownerName = playerEntity.getGameProfile().getName();
+
+				for (CloneEntity clone : serverWorld.getEntitiesByType(TypeFilter.instanceOf(CloneEntity.class), (c) -> c.getProfileName().equals(ownerName))) {
+					clone.setAngryAt(entity.getUuid());
+					clone.setAngerTime(Constants.ANGER_TIME);
+					clone.setTarget((LivingEntity) entity);
+				}
 			}
 
 			return ActionResult.PASS;
