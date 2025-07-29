@@ -4,12 +4,12 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.client.util.DefaultSkinHelper;
-import net.minecraft.client.util.SkinTextures;
+import net.minecraft.util.Identifier;
 
 @Environment(EnvType.CLIENT)
 public class CloneRenderState extends PlayerEntityRenderState {
     public boolean skinUpdated = false;
-    public SkinTextures skinTextures = DefaultSkinHelper.getSteve();
+    public Identifier skinTexture = DefaultSkinHelper.getSteve().texture();
 
     public CloneRenderState() {
         super();

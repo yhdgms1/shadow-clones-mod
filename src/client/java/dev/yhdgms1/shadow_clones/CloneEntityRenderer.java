@@ -10,6 +10,7 @@ import net.minecraft.client.render.entity.feature.PlayerHeldItemFeatureRenderer;
 import net.minecraft.client.render.entity.model.ArmorEntityModel;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.entity.model.EntityModelLayers;
+import net.minecraft.client.util.SkinTextures;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
@@ -21,6 +22,9 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+
+import java.util.Optional;
+import java.util.UUID;
 
 public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRenderState, CloneEntityModel<CloneRenderState>> {
     public CloneEntityRenderer(EntityRendererFactory.Context ctx) {
@@ -44,15 +48,25 @@ public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRen
         super.updateRenderState(entity, state, f);
         BipedEntityRenderer.updateBipedRenderState(entity, state, f, this.itemModelResolver);
 
-        GameProfile profile = entity.getProfile();
+        String url = entity.getSkinURL();
 
-        if (profile == null) {
-            ShadowClones.LOGGER.warn("GameProfile is null");
-        }
+        if (!url.isEmpty()) {
+            TextureManager.LoadingTexture loadingTexture = TextureManager.loadTexture(url);
 
-        if (profile != null && !state.skinUpdated) {
-            state.skinUpdated = true;
-            state.skinTextures = MinecraftClient.getInstance().getSkinProvider().getSkinTextures(profile);
+            if (loadingTexture.state == TextureManager.State.COMPLETE && !state.skinUpdated) {
+                state.skinUpdated = true;
+                loadingTexture.texture.ifPresent(identifier -> state.skinTexture = identifier);
+            }
+        } else {
+            if (!state.skinUpdated) {
+                state.skinUpdated = true;
+
+                Optional<SkinTextures> skinTextures = TextureManager.getOfflineTextures(entity);
+
+                skinTextures.ifPresent(textures -> {
+                    state.skinTexture = textures.texture();
+                });
+            }
         }
 
         state.equippedHeadStack = entity.getEquippedStack(EquipmentSlot.HEAD);
@@ -63,12 +77,12 @@ public class CloneEntityRenderer extends MobEntityRenderer<CloneEntity, CloneRen
         state.leftArmPose = getArmPose(entity, Arm.LEFT);
         state.rightArmPose = getArmPose(entity, Arm.RIGHT);
 
-        state.displayName = Text.of(entity.getSkinName());
+        state.displayName = Text.of(entity.getProfileName());
     }
 
     @Override
     public Identifier getTexture(CloneRenderState state) {
-        return state.skinTextures.texture();
+        return state.skinTexture;
     }
 
     @Override

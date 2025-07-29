@@ -2,14 +2,10 @@ package dev.yhdgms1.shadow_clones;
 
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.entity.model.*;
-import net.minecraft.client.render.entity.state.IllagerEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Arm;
-import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 
 import java.util.function.Function;
 
@@ -65,9 +61,9 @@ public class CloneEntityModel<S extends CloneRenderState> extends BipedEntityMod
         modelPartData3 = modelPartData.getChild("right_leg");
         modelPartData2.addChild("left_pants", ModelPartBuilder.create().uv(0, 48).cuboid(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, dilation.add(0.25F)), ModelTransform.NONE);
         modelPartData3.addChild("right_pants", ModelPartBuilder.create().uv(0, 32).cuboid(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, dilation.add(0.25F)), ModelTransform.NONE);
+
         ModelPartData modelPartData4 = modelPartData.getChild("body");
         modelPartData4.addChild("jacket", ModelPartBuilder.create().uv(16, 32).cuboid(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, dilation.add(0.25F)), ModelTransform.NONE);
-
 
         return TexturedModelData.of(modelData, 64, 64);
     }
